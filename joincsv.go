@@ -111,6 +111,7 @@ func join(fields []string) string {
 	return strings.TrimSpace(b.String())
 }
 
+// row takes your indexes and a row from the content and returns a row for the output CSV
 func row(idxs [][]int, vals []string) []string {
 	ret := make([]string, len(idxs))
 	for i, v := range idxs {
@@ -148,33 +149,14 @@ func flatten(l map[string][]int) ([]string, [][]int) {
 	if len(l) < 1 {
 		return nil, nil
 	}
-	h := make([]string, 1, len(l))
-	idxs := make([][]int, 1, len(l))
-	h[0] = "SourceFile"
-	// check if the label map contains a SourceFile label
+	h := make([]string, 0, len(l))
+	idxs := make([][]int, 0, len(l))
+	// check if the label map contains a SourceFile label, if so put it in first place
 	sf, ok := l["SourceFile"]
 	if ok {
-		idxs[0] = sf
+		h = append(h, "SourceFile")
+		idxs = append(idxs, sf)
 		delete(l, "SourceFile")
-	} else {
-		// let's dive into the map and just pick whatever is in the first column
-		var key string
-		for k, v := range l {
-			for _, vv := range v {
-				if vv == 0 {
-					key = k
-					break
-				}
-			}
-			if key != "" {
-				break
-			}
-		}
-		if key == "" {
-			return nil, nil
-		}
-		idxs[0] = l[key]
-		delete(l, key)
 	}
 	for k, v := range l {
 		h = append(h, k)
