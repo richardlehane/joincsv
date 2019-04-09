@@ -17,13 +17,19 @@ func main() {
 	switch os.Args[1] {
 	case "-h", "--help":
 		fmt.Println(`joincsv
-This program accepts two or more CSV files as inputs.
-The first CSV file should contain one or more rows of labels.
+Sample usage: joincsv labels.csv content1.csv content2.csv
+
+joincsv accepts two or more CSV files as inputs.
+
+The first CSV file must contain two or more rows of labels.
+The first row in that CSV file should be your desired new headings in order.
+The second (and subsequent) rows should have those headings in the
+columns where those values live in your content files.
+
 The second, and remaining, CSV files should all contain contents.
+
 This program will join those together and apply label headings from
 your label CSV.
-
-Sample usage: joincsv labels.csv content1.csv content2.csv
 
 There is one optional flag "-k", or "--keep". Use this if your content
 CSVs don't have header rows (otherwise you'll lose your first row of data)!`)
@@ -43,10 +49,7 @@ CSVs don't have header rows (otherwise you'll lose your first row of data)!`)
 			}
 		}
 	}
-	var (
-		hdrs []string
-		idxs [][]int
-	)
+	var idxs [][]int
 	outcsv := csv.NewWriter(os.Stdout)
 	for i, path := range os.Args[n:] {
 		c, err := readCSV(path)
@@ -55,8 +58,12 @@ CSVs don't have header rows (otherwise you'll lose your first row of data)!`)
 			os.Exit(1)
 		}
 		if i == 0 {
-			hdrs, idxs = flatten(labels(c))
-			outcsv.Write(hdrs)
+			if len(c) < 2 {
+				fmt.Println("Error: your labels csv must contain at least two rows (see help -h)")
+				os.Exit(1)
+			}
+			idxs = flatten(c[0], labels(c[1:]))
+			outcsv.Write(c[0])
 			continue
 		}
 		if skip {
@@ -143,24 +150,12 @@ func labels(c [][]string) map[string][]int {
 	return l
 }
 
-// flatten takes the labels, puts the filename in the first position, then returns
-// a header row for the output csv, as well as a slice of index slices
-func flatten(l map[string][]int) ([]string, [][]int) {
-	if len(l) < 1 {
-		return nil, nil
+// flatten takes the labels then returns the indexes where those labels
+// live in the content
+func flatten(h []string, l map[string][]int) [][]int {
+	idxs := make([][]int, len(h))
+	for i, v := range h {
+		idxs[i] = l[v]
 	}
-	h := make([]string, 0, len(l))
-	idxs := make([][]int, 0, len(l))
-	// check if the label map contains a SourceFile label, if so put it in first place
-	sf, ok := l["SourceFile"]
-	if ok {
-		h = append(h, "SourceFile")
-		idxs = append(idxs, sf)
-		delete(l, "SourceFile")
-	}
-	for k, v := range l {
-		h = append(h, k)
-		idxs = append(idxs, v)
-	}
-	return h, idxs
+	return idxs
 }
