@@ -62,8 +62,8 @@ CSVs don't have header rows (otherwise you'll lose your first row of data)!`)
 				fmt.Println("Error: your labels csv must contain at least two rows (see help -h)")
 				os.Exit(1)
 			}
-			idxs = flatten(c[0], labels(c[1:]))
-			outcsv.Write(c[0])
+			idxs = flatten(shrink(c[0]), labels(c[1:]))
+			outcsv.Write(shrink(c[0]))
 			continue
 		}
 		if skip {
@@ -158,4 +158,14 @@ func flatten(h []string, l map[string][]int) [][]int {
 		idxs[i] = l[v]
 	}
 	return idxs
+}
+
+// shrink removes any trailing empty headers
+func shrink(h []string) []string {
+	for i := len(h) - 1; i > -1; i-- {
+		if h[i] != "" {
+			return h[:i+1]
+		}
+	}
+	return h
 }
