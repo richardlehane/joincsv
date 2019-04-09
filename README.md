@@ -2,7 +2,9 @@
 
 Use it like this: `joincsv labels.csv content1.csv content2.csv`
 
-All CSV files must have the same number of columns. Labels from the first CSV are applied as headers
-for the corresponding columns of data from the successive CSVs.
+Labels from the first CSV are applied as headers for the successive CSVs.
+The first row of the first CSV should be your desired new headers in order.
+The subsequent rows of the first CSV should be those same headers in the 
+columns where those values appear in your content CSVs.
 
 If that doesn't make any sense, see the examples folder. 
